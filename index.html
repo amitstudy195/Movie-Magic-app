@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Magic</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="header">
+        <div class="logo">Movie Magic</div>
+        <div class="search-container">
+            <div class="search-box">
+                <input type="text" class="search-input" placeholder="Search for movies..." id="searchInput">
+            </div>
+            <div class="filters">
+                <select id="genreFilter">
+                    <option value="">All Genres</option>
+                </select>
+                <select id="yearFilter">
+                    <option value="">All Years</option>
+                </select>
+                <select id="sortFilter">
+                    <option value="">Sort By</option>
+                    <option value="Popularity.desc">Most Popular</option>
+                    <option value="vote_average.desc">Highest Rated</option>
+                    <option value="release_date.desc">Latest Release</option>
+                    <option value="title.asc">A-Z</option>
+                </select>
+            </div>
+            <button class="clear-btn" id="clearBtn">Clear All</button>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div id="trendingSection">
+            <div class="section-title">
+                🔥Trending Now
+            </div>
+            <div class="carousel-container">
+                <button class="carousel-btn prev" id="trendingPrev">
+                    ◀️
+                </button>
+                <div class="carousel" id="trendingCarousel">
+                    <div class="loading">Loading trending movies...</div>
+                     </div>
+                    <button class="carousel-btn next" id="trendingNext">
+                        ▶️
+                    </button>
+               </div>
+            </div>
+            <div class="section-title" id="randomSectionTitle">
+                🎦Discover Movies
+            </div>
+            <div class="movies-grid" id="moviesGrid">
+                <div class="loading">Loading Movies...</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
