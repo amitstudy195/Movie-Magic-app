@@ -1,6 +1,6 @@
 class MovieExplorer {
     constructor(){
-        this.API_KEY ="ba7a7ab492ae117b59a47ab641ceee73";
+        this.API_KEY ="YOUR_TMDB_API_KEY";
         this.BASE_URL ="https://api.themoviedb.org/3";
         this.IMAGE_BASE_IMAGE ="https://image.tmdb.org/t/p/w500";
         this.FALLBACK_IMAGE ='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjgwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDI4MCAzMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyODAiIGhlaWdodD0iMzAwIiBmaWxsPSIjMzMzIi8+Cjx0ZXh0IHg9IjE0MCIgeT0iMTUwIiBmaWxsPSIjNjY2IiB0ZXh0LWFuY2hvcj0ibwlkZGxlIiBkeT0iLjNlbSI+Tm8gSW1hZ2U8L3RleHQ+Cjwvc3ZnPg==';
