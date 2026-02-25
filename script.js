@@ -1,8 +1,8 @@
 class MovieExplorer {
     constructor(){
-        this.API_KEY ="YOUR_TMDB_API_KEY";
+        this.API_KEY ="ba7a7ab492ae117b59a47ab641ceee73";
         this.BASE_URL ="https://api.themoviedb.org/3";
-        this.IMAGE_BASE_IMAGE ="https://image.tmdb.org/t/p/w500";
+        this.IMAGE_BASE_URL ="https://image.tmdb.org/t/p/w500";
         this.FALLBACK_IMAGE ='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjgwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDI4MCAzMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyODAiIGhlaWdodD0iMzAwIiBmaWxsPSIjMzMzIi8+Cjx0ZXh0IHg9IjE0MCIgeT0iMTUwIiBmaWxsPSIjNjY2IiB0ZXh0LWFuY2hvcj0ibwlkZGxlIiBkeT0iLjNlbSI+Tm8gSW1hZ2U8L3RleHQ+Cjwvc3ZnPg==';
         this.genres ={};
         this.currentPage=1;
@@ -107,7 +107,7 @@ class MovieExplorer {
         const year = movie.release_date ? new Date(movie.release_date).getFullYear():'TBA';
         const genres = movie.genre_ids && movie.genre_ids.length ? movie.genre_ids.slice(0,2).map(id=>this.genres[id]).filter(Boolean).join(', ') :"N/A"; 
 
-        return`
+        return `
         <div class="trending-card">
            <img src="${posterPath}" alt="${movie.title}" class="movie-poster" loading="lazy" onerror="this.src='${this.FALLBACK_IMAGE}'">
         <div class="trending-rank">${rank}</div>
@@ -126,12 +126,12 @@ class MovieExplorer {
     async loadRandomMovies(){
         try {
             const randomPage = Math.floor(Math.random() * 10) +1;
-            let url = `${this.BASE_URL}/discover/movie/api_key=${this.API_KEY}&page=${randomPage}`;
+            let url = `${this.BASE_URL}/discover/movie?api_key=${this.API_KEY}&page=${randomPage}`;
             if(this.currentFilters.sort){
-                url += `&sort_by = ${this.currentFilters.sort}`
+                url += `&sort_by=${this.currentFilters.sort}`
             }
             if(this.currentFilters.genre){
-                url += `&with_genres = ${this.currentFilters.genre}`
+                url += `&with_genres=${this.currentFilters.genre}`
             }
             const response = await fetch(url);
             const data = await response.json();
@@ -154,11 +154,11 @@ class MovieExplorer {
                 `;
                 return;
         }
-        container.innerHTML = movies.map(movie => this.createMovieCard(movie).join(''));
+        container.innerHTML = movies.map(movie => this.createMovieCard(movie)).join('');
     }
 
     createMovieCard(movie){
-         const posterPath = movie.poster_path ? `${this.IMAGE_BASE_URL} ${movie.poster_path}`:this.FALLBACK_IMAGE;
+         const posterPath = movie.poster_path ? `${this.IMAGE_BASE_URL}${movie.poster_path}`:this.FALLBACK_IMAGE;
 
         const rating = movie.vote_average ? movie.vote_average.toFixed(1):'N/A';
         const year = movie.release_date ? new Date(movie.release_date).getFullYear():'TBA';
@@ -236,7 +236,7 @@ class MovieExplorer {
             case "vote_average.desc":
                 return movies.sort((a,b) => b.vote_average - a.vote_average);
             case "release_date.desc":
-                return movies.sort((a,b) => new Date (b.release_date) - (a.release_date));
+                return movies.sort((a,b) => new Date(b.release_date) - new Date(a.release_date));
             case "title.asc":
                 return movies.sort((a,b)=> a.title.localeCompare(b.title));
             default:
@@ -250,7 +250,7 @@ class MovieExplorer {
         const yearFilter =document.getElementById("yearFilter");
         const sortFilter =document.getElementById("sortFilter");
         const clearBtn =document.getElementById("clearBtn");
-        const trendingSection = document.getElementById("trendingsection");
+        const trendingSection = document.getElementById("trendingSection");
 
         this.currentFilters = {
             genre:genreFilter.value,
