@@ -48,6 +48,78 @@ class MovieExplorer {
         
         trendingPrev.addEventListener("click", ()=>this.scrollCarousel('prev'));
         trendingNext.addEventListener("click", ()=>this.scrollCarousel('next'));
+    
+
+    // --- NEW: MODAL & CARD CLICK LISTENERS ---
+        const trailerModal = document.getElementById("trailerModal");
+        const closeModalBtn = document.getElementById("closeModalBtn");
+
+        // Event Delegation: Listen for clicks on the parent containers
+        document.getElementById("moviesGrid").addEventListener("click", (e) => {
+            const card = e.target.closest('.movie-card-btn');
+            if(card) this.openTrailer(card.dataset.id);
+        });
+
+        document.getElementById("trendingCarousel").addEventListener("click", (e) => {
+            const card = e.target.closest('.movie-card-btn');
+            if(card) this.openTrailer(card.dataset.id);
+        });
+
+        // Close Modal Listeners
+        closeModalBtn.addEventListener("click", () => this.closeTrailer());
+        trailerModal.addEventListener("click", (e) => {
+            // Close if clicking the dark background overlay, but not the video player itself
+            if(e.target === trailerModal) this.closeTrailer();
+        });
+    }
+
+    // --- NEW: TRAILER METHODS ---
+    async openTrailer(movieId) {
+        const modal = document.getElementById('trailerModal');
+        const iframe = document.getElementById('trailerIframe');
+        const noTrailerMsg = document.getElementById('noTrailerMsg');
+
+        // Show the modal
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        
+        // Reset previous state
+        iframe.src = ''; 
+        iframe.classList.add('hidden');
+        noTrailerMsg.classList.remove('hidden');
+        noTrailerMsg.textContent = "Loading trailer...";
+
+        try {
+            // Fetch videos for this specific movie
+            const response = await fetch(`${this.BASE_URL}/movie/${movieId}/videos?api_key=${this.API_KEY}`);
+            const data = await response.json();
+            
+            // Find an official YouTube trailer (or just any YouTube video if a "Trailer" is missing)
+            const trailer = data.results.find(vid => vid.site === 'YouTube' && vid.type === 'Trailer') 
+                         || data.results.find(vid => vid.site === 'YouTube');
+
+            if (trailer) {
+                noTrailerMsg.classList.add('hidden');
+                iframe.classList.remove('hidden');
+                // The ?autoplay=1 parameter ensures it starts playing immediately
+                iframe.src = `https://www.youtube.com/embed/${trailer.key}?autoplay=1`;
+            } else {
+                noTrailerMsg.textContent = "😕 Sorry, no trailer available for this movie.";
+            }
+        } catch (error) {
+            console.error("Error fetching trailer:", error);
+            noTrailerMsg.textContent = "Error loading trailer data.";
+        }
+    }
+
+    closeTrailer() {
+        const modal = document.getElementById('trailerModal');
+        const iframe = document.getElementById('trailerIframe');
+        
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        // Clear the iframe source so the video stops playing in the background
+        iframe.src = ''; 
     }
 
     async loadGenres(){
@@ -87,11 +159,11 @@ class MovieExplorer {
             const response = await fetch(`${this.BASE_URL}/trending/movie/week?api_key=${this.API_KEY}`);
             const data = await response.json();
 
-            const trendingMovies = data.results.slice(0,10);
+            const trendingMovies = data.results.slice(0,50);
             this.displayTrendingMovies(trendingMovies);
         } catch (error) {
             console.error("Error loading trending movies:", error);
-            document.getElementById("trendingCarousel").innerHTML = '<div class="error">Failed to load trending movies</div>'
+            document.getElementById("trendingCarousel").innerHTML = '<div class="text-center p-12 text-netflix text-lg">Failed to load trending movies</div>'
         }
     }
 
@@ -108,16 +180,16 @@ class MovieExplorer {
         const genres = movie.genre_ids && movie.genre_ids.length ? movie.genre_ids.slice(0,2).map(id=>this.genres[id]).filter(Boolean).join(', ') :"N/A"; 
 
         return `
-        <div class="trending-card">
-           <img src="${posterPath}" alt="${movie.title}" class="movie-poster" loading="lazy" onerror="this.src='${this.FALLBACK_IMAGE}'">
-        <div class="trending-rank">${rank}</div>
-        <div class="trending-overlay">
-            <div class="trending-title">${movie.title}</div>
-            <div class="trending-details">
+        <div class="movie-card-btn relative min-w-[300px] h-[450px] rounded-xl overflow-hidden cursor-pointer transition-all duration-300 bg-gradient-to-tr from-netflix/10 to-black/80 hover:scale-105 hover:shadow-[0_20px_40px_rgba(229,9,20,.3)] group shrink-0" data-id="${movie.id}">
+           <img src="${posterPath || poster}" alt="${movie.title}" class="movie-poster" loading="lazy" onerror="this.src='${this.FALLBACK_IMAGE}'">
+        <div class="absolute top-4 left-4 bg-black/80 text-netflix text-4xl font-bold px-4 py-2 rounded-xl z-10 shadow-[2px_2px_4px_rgba(0,0,0,0.8)] border-2 border-netflix">${rank}</div>
+        <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent pt-10 px-5 pb-5 text-white">
+            <div class="text-xl font-bold mb-2 drop-shadow-md truncate">${movie.title}</div>
+            <div class="flex justify-between items-center text-sm opacity-90">
             <span class="trending-year">${year}</span>
-            <span class="trending-rating">${rating}</span>
+            <span class="bg-netflix px-2.5 py-1 rounded-full font-bold text-xs">${rating}</span>
             </div>
-            <div class="trending-genres">${genres}</div>
+            <div class="text-xs text-gray-300 mt-2 truncate">${genres}</div>
         </div>
         </div>
         `;
@@ -139,7 +211,7 @@ class MovieExplorer {
             this.displayMovies(data.results,"moviesGrid");
         } catch (error) {
             console.error("Error loading random movies", error);
-            document.getElementById("moviesGrid").innerHTML = '<div class="error" >Failed to load movies.Please try again. </div> '
+            document.getElementById("moviesGrid").innerHTML = '<div class="text-center p-12 text-netflix text-lg col-span-full" >Failed to load movies.Please try again. </div> '
         }
     }
 
@@ -147,8 +219,8 @@ class MovieExplorer {
         const container = document.getElementById(containerId);
 
         if(movies.length === 0){
-            container.innerHTML = `<div class="no-results">
-                <h2>🔍 No movies found</h2>
+            container.innerHTML = `<div class="text-center p-16 text-[#ccc] col-span-full">
+                <h2 class="text-3xl mb-4">🔍 No movies found</h2>
                 <p>Try adjusting your search criteria or filters</p>
                 </div>
                 `;
@@ -166,16 +238,16 @@ class MovieExplorer {
         const genres = movie.genre_ids && movie.genre_ids.length ? movie.genre_ids.slice(0,2).map(id=>this.genres[id]).filter(Boolean).join(',') :"N/A";
 
         return`
-        <div class="movie-card">
-           <img src="${posterPath}" alt="${movie.title}" class="movie-poster" loading="lazy" onerror="this.src='${this.FALLBACK_IMAGE}'">
-        <div class="movie-info">
-            <div class="movie-title">${movie.title}</div>
-            <div class="movie-details">
+        <div class="movie-card-btn bg-white/5 rounded-xl overflow-hidden transition-all duration-300 cursor-pointer min-h-[450px] backdrop-blur-md border border-white/10 hover:-translate-y-2.5 hover:shadow-[0_20px_40px_rgba(0,0,0,0.3)] hover:border-netflix group flex flex-col " data-id="${movie.id}">
+           <img src="${posterPath || poster}" alt="${movie.title}" class="w-full h-[300px] object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" onerror="this.src='${this.FALLBACK_IMAGE}'">
+        <div class="p-4 flex-1 flex flex-col">
+            <div class="text-lg font-bold mb-2 text-white truncate">${movie.title}</div>
+            <div class="flex justify-between items-center mb-2.5 text-sm text-[#ccc]">
             <span class="movie-year">${year}</span>
-            <span class="movie-rating">${rating}</span>
+            <span class="bg-netflix px-2 py-1 rounded-full font-bold text-xs text-white">${rating}</span>
             </div>
-            <div class="movie-genres">${genres}</div>
-            <div class="movie-description">${description}</div>
+            <div class="text-xs text-[#ccc] mb-1.5 truncate">${genres}</div>
+            <div class="text-[#999] text-xs leading-relaxed line-clamp-3 mb-2 flex-1">${description || movie.overview}</div>
 
         </div>
         </div>
@@ -191,19 +263,21 @@ class MovieExplorer {
 
         if(trimmedQuery ===""){
             this.isSearching = false;
-            clearBtn.classList.remove("show");
+            clearBtn.classList.remove("inline-block");
+            clearBtn.classList.add("hidden");
             sectionTitle.textContent = '🎦 Discover Movies';
             trendingSection.style.display ="block";
             await this.loadRandomMovies();
             return;
         }
         this.isSearching = true;
-        clearBtn.classList.add("show");
+        clearBtn.classList.remove("hidden");
+        clearBtn.classList.add("inline-block");
         sectionTitle.textContent = `🔍Search Results for ${trimmedQuery}`;
         trendingSection.style.display = "none";
 
         try {
-            document.getElementById("moviesGrid").innerHTML = '<div class="loading"> Searching movies.... </div>';
+            document.getElementById("moviesGrid").innerHTML = '<div class="text-center p-12 text-xl text-[#ccc] col-span-full"> Searching movies.... </div>';
 
             let url = `${this.BASE_URL}/search/movie?api_key=${this.API_KEY}&query=${encodeURIComponent(trimmedQuery)}&page=1`;
             if(this.currentFilters.year){
@@ -225,7 +299,7 @@ class MovieExplorer {
             this.displayMovies(results, "moviesGrid")
         } catch (error) {
             console.error("Error searching movies", error);
-            document.getElementById("moviesGrid").innerHTML = '<div class="error" >Search failed.Please try again. </div> '
+            document.getElementById("moviesGrid").innerHTML = '<div class="text-center p-12 text-netflix text-lg col-span-full" >Search failed.Please try again. </div> '
         }
     }
 
@@ -259,9 +333,11 @@ class MovieExplorer {
         }
 
         if(this.currentFilters.genre || this.currentFilters.year || this.currentFilters.sort || searchInput.value.trim()){
-            clearBtn.classList.add("show")
+            clearBtn.classList.remove("hidden")
+            clearBtn.classList.add("inline-block")
         }else{
-            clearBtn.classList.remove("show")
+            clearBtn.classList.add("hidden")
+            clearBtn.classList.remove("inline-block")
         }
 
         if(searchInput.value.trim()){
@@ -282,7 +358,7 @@ class MovieExplorer {
 
     async loadFilteredMovies(){
         try {
-            document.getElementById("moviesGrid").innerHTML = '<div class="loading"> Loading filtered Movies.... </div>';
+            document.getElementById("moviesGrid").innerHTML = '<div class="text-center p-12 text-xl text-[#ccc] col-span-full"> Loading filtered Movies.... </div>';
 
             let url = `${this.BASE_URL}/discover/movie?api_key=${this.API_KEY}&page=1`;
             if(this.currentFilters.genre){
@@ -303,7 +379,7 @@ class MovieExplorer {
             this.displayMovies(data.results, "moviesGrid")
         } catch (error) {
             console.error("Error loading filtered movies", error);
-            document.getElementById("moviesGrid").innerHTML = '<div class="error" >Failed to load filtered movies.Please try again. </div> '
+            document.getElementById("moviesGrid").innerHTML = '<div class="text-center p-12 text-netflix text-lg col-span-full" >Failed to load filtered movies.Please try again. </div> '
         }
     
     }
@@ -315,7 +391,11 @@ class MovieExplorer {
         document.getElementById("yearFilter").value ='';
         document.getElementById("sortFilter").value ='';
 
-        document.getElementById("clearBtn").classList.remove("show");
+        const clearBtn = document.getElementById("clearBtn");
+
+        clearBtn.classList.add("hidden");
+        clearBtn.classList.remove("inline-block");
+
         document.getElementById("randomSectionTitle").textContent = '🎦Discover Movies';
 
         trendingSection.style.display = "block";
